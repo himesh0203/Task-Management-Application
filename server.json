@@ -1,0 +1,86 @@
+const express = require("express");
+const fs = require("fs");
+
+const app = express();
+
+app.use(express.json());
+app.use(express.static("public"));
+
+const FILE = "tasks.json";
+
+function readTasks() {
+    return JSON.parse(fs.readFileSync(FILE));
+}
+
+function saveTasks(tasks) {
+    fs.writeFileSync(FILE, JSON.stringify(tasks, null, 2));
+}
+
+// Simple Login
+app.post("/login", (req, res) => {
+    const { username, password } = req.body;
+
+    if (username === "admin" && password === "1234")
+        return res.json({ success: true });
+
+    res.json({ success: false });
+});
+
+// Get Tasks
+app.get("/tasks", (req, res) => {
+    res.json(readTasks());
+});
+
+// Add Task
+app.post("/tasks", (req, res) => {
+    const tasks = readTasks();
+
+    const task = {
+        id: Date.now(),
+        title: req.body.title,
+        completed: false
+    };
+
+    tasks.push(task);
+
+    saveTasks(tasks);
+
+    res.json(task);
+});
+
+// Update
+app.put("/tasks/:id", (req, res) => {
+
+    let tasks = readTasks();
+
+    tasks = tasks.map(t =>
+
+        t.id == req.params.id
+            ? { ...t, completed: !t.completed }
+            : t
+    );
+
+    saveTasks(tasks);
+
+    res.json({ success: true });
+
+});
+
+// Delete
+app.delete("/tasks/:id", (req, res) => {
+
+    let tasks = readTasks();
+
+    tasks = tasks.filter(t => t.id != req.params.id);
+
+    saveTasks(tasks);
+
+    res.json({ success: true });
+
+});
+
+app.listen(3000, () =>
+
+console.log("Server Running on http://localhost:3000")
+
+);
